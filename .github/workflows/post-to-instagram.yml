@@ -15,17 +15,17 @@ jobs:
       INSTAGRAM_PUBLISH_ENABLED: "true"
       INSTAGRAM_BUSINESS_ID: ${{ secrets.INSTAGRAM_BUSINESS_ID }}
       INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-      INSTAGRAM_GRAPH_API_VERSION: ${{ secrets.INSTAGRAM_GRAPH_API_VERSION }}
+      INSTAGRAM_GRAPH_API_VERSION: "v22.0"
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GEMINI_MODELS: ${{ secrets.GEMINI_MODELS }}
-      HP_URL: ${{ secrets.HP_URL }}
-      NOTE_URL: ${{ secrets.NOTE_URL }}
-      HP_RSS_URL: ${{ secrets.HP_RSS_URL }}
-      NOTE_RSS_URL: ${{ secrets.NOTE_RSS_URL }}
+      GEMINI_MODELS: "gemini-3.1-flash-lite-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash"
+      HP_URL: "https://info-study.com/"
+      NOTE_URL: "https://note.com/k5fujiwara"
+      HP_RSS_URL: "https://info-study.com/feed"
+      NOTE_RSS_URL: "https://note.com/k5fujiwara/rss"
       CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
       CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
       CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-      CLOUDINARY_FOLDER: ${{ secrets.CLOUDINARY_FOLDER }}
+      CLOUDINARY_FOLDER: "myreelsautomation"
 
     steps:
       - name: Checkout repository
@@ -41,6 +41,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           python -m playwright install chromium
+
+      - name: Validate required secrets
+        run: |
+          missing=0
+          for name in INSTAGRAM_BUSINESS_ID INSTAGRAM_ACCESS_TOKEN GEMINI_API_KEY CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not set"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Run generator and publisher
         run: python main.py
