@@ -63,13 +63,13 @@ def _upload_image_to_cloudinary(image_path, config):
 
 
 def _instagram_request(method, endpoint, access_token, *, api_version="v22.0", params=None, data=None):
-    url = f"https://graph.instagram.com/{api_version}/{endpoint.lstrip('/')}"
+    url = f"https://graph.facebook.com/{api_version}/{endpoint.lstrip('/')}"
     if method.upper() == "GET":
         response = requests.get(url, params={**(params or {}), "access_token": access_token}, timeout=60)
     else:
         response = requests.post(url, data={**(data or {}), "access_token": access_token}, timeout=60)
 
-    _raise_for_response(response, f"Instagram API 呼び出し ({endpoint})")
+    _raise_for_response(response, f"Facebook Graph API 呼び出し ({endpoint})")
     return response.json()
 
 
@@ -100,7 +100,7 @@ def publish_instagram_carousel(image_paths, caption, config):
     if not business_id or not access_token:
         raise InstagramPublishError(
             "Instagram 設定が不足しています。"
-            "INSTAGRAM_BUSINESS_ID / INSTAGRAM_ACCESS_TOKEN を設定してください。"
+            "INSTAGRAM_BUSINESS_ID と FACEBOOK_ACCESS_TOKEN を設定してください。"
         )
 
     if len(image_paths) < 2:

@@ -102,7 +102,7 @@ def is_instagram_publish_enabled():
 def get_instagram_publish_config():
     return {
         "business_id": os.getenv("INSTAGRAM_BUSINESS_ID", "").strip(),
-        "access_token": os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip(),
+        "access_token": os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip(),
         "api_version": os.getenv("INSTAGRAM_GRAPH_API_VERSION", "v22.0").strip() or "v22.0",
         "cloudinary_cloud_name": os.getenv("CLOUDINARY_CLOUD_NAME", "").strip(),
         "cloudinary_api_key": os.getenv("CLOUDINARY_API_KEY", "").strip(),

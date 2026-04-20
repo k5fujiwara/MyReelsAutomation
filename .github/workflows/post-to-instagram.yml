@@ -14,7 +14,7 @@ jobs:
       GITHUB_ACTIONS: "true"
       INSTAGRAM_PUBLISH_ENABLED: "true"
       INSTAGRAM_BUSINESS_ID: ${{ secrets.INSTAGRAM_BUSINESS_ID }}
-      INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+      FACEBOOK_ACCESS_TOKEN: ${{ secrets.FACEBOOK_ACCESS_TOKEN }}
       INSTAGRAM_GRAPH_API_VERSION: "v22.0"
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODELS: "gemini-3.1-flash-lite-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash"
@@ -45,7 +45,7 @@ jobs:
       - name: Validate required secrets
         run: |
           missing=0
-          for name in INSTAGRAM_BUSINESS_ID INSTAGRAM_ACCESS_TOKEN GEMINI_API_KEY CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET; do
+          for name in INSTAGRAM_BUSINESS_ID FACEBOOK_ACCESS_TOKEN GEMINI_API_KEY CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET; do
             if [ -z "${!name}" ]; then
               echo "::error::$name is not set"
               missing=1
