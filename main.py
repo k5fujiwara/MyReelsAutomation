@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import re
 
@@ -11,8 +12,19 @@ from content_generation import (
     determine_page_count,
     generate_plan_text,
 )
+from instagram_publisher import publish_instagram_carousel
 from renderer import build_html, capture_image
-from settings import CAPTION_FILE, OUTPUT_DIR, ensure_runtime_dirs, get_next_source, get_next_theme, log
+from settings import (
+    CAPTION_FILE,
+    OUTPUT_DIR,
+    PUBLISH_RESULT_FILE,
+    ensure_runtime_dirs,
+    get_instagram_publish_config,
+    get_next_source,
+    get_next_theme,
+    is_instagram_publish_enabled,
+    log,
+)
 
 
 async def run_process():
@@ -54,6 +66,22 @@ async def run_process():
     with open(CAPTION_FILE, "w", encoding="utf-8") as f:
         f.write(ex("CAPTION"))
     log(f"キャプションを {CAPTION_FILE} に保存しました")
+
+    if is_instagram_publish_enabled():
+        image_paths = [str(OUTPUT_DIR / f"post_{i}.jpg") for i in range(1, len(pages) + 1)]
+        caption = ex("CAPTION")
+        publish_result = await asyncio.to_thread(
+            publish_instagram_carousel,
+            image_paths,
+            caption,
+            get_instagram_publish_config(),
+        )
+        with open(PUBLISH_RESULT_FILE, "w", encoding="utf-8") as f:
+            json.dump(publish_result, f, ensure_ascii=False, indent=2)
+        log(f"Instagram 投稿完了: {publish_result.get('permalink', '')}")
+        log(f"投稿結果を {PUBLISH_RESULT_FILE} に保存しました")
+    else:
+        log("Instagram 自動投稿は無効です。画像とキャプションのみ生成しました。")
 
 if __name__ == "__main__":
     asyncio.run(run_process())
