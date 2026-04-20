@@ -3,7 +3,7 @@ name: Post To Instagram
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "30 22 * * 0-4"
 
 jobs:
   generate-and-publish:
