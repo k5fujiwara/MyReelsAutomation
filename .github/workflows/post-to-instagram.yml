@@ -2,6 +2,11 @@ name: Post To Instagram
 
 on:
   workflow_dispatch:
+    inputs:
+      debug_token_fingerprint:
+        description: "Print FACEBOOK_ACCESS_TOKEN SHA-256 prefix for debugging"
+        required: false
+        default: "false"
   schedule:
     - cron: "30 22 * * 0-4"
 
@@ -54,6 +59,12 @@ jobs:
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
+
+      - name: Print token fingerprint
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_token_fingerprint == 'true' }}
+        run: |
+          token_hash=$(printf '%s' "$FACEBOOK_ACCESS_TOKEN" | sha256sum | cut -c1-12)
+          echo "FACEBOOK_ACCESS_TOKEN SHA256 prefix: $token_hash"
 
       - name: Run generator and publisher
         run: python main.py
