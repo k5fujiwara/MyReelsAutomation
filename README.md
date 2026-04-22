@@ -118,6 +118,110 @@ CLOUDINARY_FOLDER=myreelsautomation
 - `INSTAGRAM_PUBLISH_ENABLED=true` の時だけ、画像生成後にそのまま投稿されます。
 - 投稿結果は `output/publish_result.json` に保存されます。
 
+## FACEBOOK_ACCESS_TOKEN の更新手順
+
+`FACEBOOK_ACCESS_TOKEN` は無期限ではありません。  
+平日自動投稿を継続するため、期限切れ前に更新してください。
+
+### まず確認すること
+
+Meta の Access Token Debugger で、現在のトークンの `有効期限` を確認します。
+
+- `developers.facebook.com`
+- `Tools`
+- `Access Token Debugger`
+
+ここで以下を見ます。
+
+- `有効`
+- `有効期限`
+- `Scopes`
+
+`有効期限` が 1 時間前後なら短期トークンです。  
+本番運用では、約 60 日の長期トークンを使ってください。
+
+### 短期トークンを長期トークンへ交換する
+
+Meta App の `App ID` と `App Secret` を使って、短期トークンを長期トークンへ交換します。
+
+確認場所:
+
+- `developers.facebook.com`
+- 対象アプリ
+- `Settings`
+- `Basic`
+
+そこで以下を確認します。
+
+- `App ID`
+- `App Secret`
+
+そのうえで、次の URL をブラウザで開きます。  
+`APP_ID`、`APP_SECRET`、`SHORT_LIVED_TOKEN` は自分の値に置き換えてください。
+
+```text
+https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=APP_ID&client_secret=APP_SECRET&fb_exchange_token=SHORT_LIVED_TOKEN
+```
+
+成功すると、次のような JSON が返ります。
+
+```json
+{
+  "access_token": "EAAB...",
+  "token_type": "bearer",
+  "expires_in": 5182163
+}
+```
+
+`expires_in` が数百万秒なら、長期トークンの可能性が高いです。  
+返ってきた `access_token` を、もう一度 Access Token Debugger へ入れて `有効期限` を確認してください。
+
+### GitHub Secrets を更新する
+
+長期トークンが取れたら、GitHub の Repository secrets にある `FACEBOOK_ACCESS_TOKEN` を更新します。
+
+手順:
+
+1. リポジトリを開く
+2. `Settings`
+3. `Secrets and variables`
+4. `Actions`
+5. `Repository secrets`
+6. `FACEBOOK_ACCESS_TOKEN` を更新
+
+注意:
+
+- 値だけを入れる
+- `FACEBOOK_ACCESS_TOKEN=` は入れない
+- `"` は入れない
+- 前後の空白を入れない
+
+### 更新後の確認方法
+
+1. `Actions`
+2. `Post To Instagram`
+3. `Run workflow`
+4. `debug_token_fingerprint=true`
+
+ログの `FACEBOOK_ACCESS_TOKEN SHA256 prefix: ...` を確認し、手元のトークン指紋と一致することを確認します。
+
+PowerShell での確認例:
+
+```powershell
+$token = Read-Host "FACEBOOK_ACCESS_TOKEN"
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($token)
+$hash = $sha.ComputeHash($bytes)
+$hex = -join ($hash | ForEach-Object { $_.ToString("x2") })
+$hex.Substring(0,12)
+```
+
+### 運用メモ
+
+- 月 1 回は Access Token Debugger で期限確認
+- 遅くとも期限の 1〜2 週間前には更新
+- 更新後は GitHub Actions を手動で 1 回流して確認
+
 ## GitHub Actions での本番運用
 
 GitHub Actions 前提で運用する場合は、`.env` ではなく GitHub Secrets を使用してください。  
