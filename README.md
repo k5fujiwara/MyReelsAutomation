@@ -140,7 +140,40 @@ Meta の Access Token Debugger で、現在のトークンの `有効期限` を
 `有効期限` が 1 時間前後なら短期トークンです。  
 本番運用では、約 60 日の長期トークンを使ってください。
 
-### 短期トークンを長期トークンへ交換する
+### 1. まず短期トークンを取得する
+
+更新時は、毎回まず **Graph API Explorer で短期トークンを取り直す**ところから始めます。  
+以前やった方法はこれです。
+
+手順:
+
+1. `developers.facebook.com` にログイン
+2. 対象アプリを開く
+3. `Tools` から `Graph API Explorer` を開く
+4. 画面上部で、この自動投稿に使っている **対象アプリ** を選ぶ
+5. `Get Token` または `Generate Access Token` を押す
+6. Facebook ログイン画面が出たら、**Instagram と紐づいている Facebook アカウント**で認証する
+7. 必要な権限を許可する
+
+最低限確認したい権限:
+
+- `instagram_basic`
+- `instagram_content_publish`
+
+状況に応じて必要になることがある権限:
+
+- `pages_show_list`
+- `pages_read_engagement`
+
+認証が完了すると、Explorer 上にアクセストークンが表示されます。  
+これが **短期トークン** です。
+
+補足:
+
+- ここで取得したトークンを、そのまま GitHub Secrets に入れない
+- 先に次の手順で **長期トークンへ交換**する
+
+### 2. 短期トークンを長期トークンへ交換する
 
 Meta App の `App ID` と `App Secret` を使って、短期トークンを長期トークンへ交換します。
 
@@ -176,7 +209,7 @@ https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&clien
 `expires_in` が数百万秒なら、長期トークンの可能性が高いです。  
 返ってきた `access_token` を、もう一度 Access Token Debugger へ入れて `有効期限` を確認してください。
 
-### GitHub Secrets を更新する
+### 3. GitHub Secrets を更新する
 
 長期トークンが取れたら、GitHub の Repository secrets にある `FACEBOOK_ACCESS_TOKEN` を更新します。
 
@@ -196,7 +229,7 @@ https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&clien
 - `"` は入れない
 - 前後の空白を入れない
 
-### 更新後の確認方法
+### 4. 更新後の確認方法
 
 1. `Actions`
 2. `Post To Instagram`
@@ -216,7 +249,7 @@ $hex = -join ($hash | ForEach-Object { $_.ToString("x2") })
 $hex.Substring(0,12)
 ```
 
-### 運用メモ
+### 5. 運用メモ
 
 - 月 1 回は Access Token Debugger で期限確認
 - 遅くとも期限の 1〜2 週間前には更新
