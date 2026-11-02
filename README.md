@@ -101,7 +101,7 @@ Instagram への本番投稿を有効にする場合は、以下も設定して�
 
 ```env
 INSTAGRAM_BUSINESS_ID=your_instagram_business_id
-FACEBOOK_ACCESS_TOKEN=your_facebook_graph_access_token
+INSTAGRAM_ACCESS_TOKEN=your_instagram_access_token
 INSTAGRAM_PUBLISH_ENABLED=true
 INSTAGRAM_GRAPH_API_VERSION=v22.0
 
@@ -113,14 +113,14 @@ CLOUDINARY_FOLDER=myreelsautomation
 
 補足:
 
-- Facebook Login 経由で取得した Graph API アクセストークンを使う前提です。
+- Instagram Login / Instagram Graph API 用アクセストークンを使う前提です。
 - Instagram Graph API はローカルファイルを直接受け取れないため、公開 URL 化のために Cloudinary を使っています。
 - `INSTAGRAM_PUBLISH_ENABLED=true` の時だけ、画像生成後にそのまま投稿されます。
 - 投稿結果は `output/publish_result.json` に保存されます。
 
-## FACEBOOK_ACCESS_TOKEN の更新手順
+## INSTAGRAM_ACCESS_TOKEN の更新手順
 
-`FACEBOOK_ACCESS_TOKEN` は無期限ではありません。  
+`INSTAGRAM_ACCESS_TOKEN` は無期限ではありません。  
 平日自動投稿を継続するため、期限切れ前に更新してください。
 
 ### まず確認すること
@@ -142,17 +142,17 @@ Meta の Access Token Debugger で、現在のトークンの `有効期限` を
 
 ### 1. まず短期トークンを取得する
 
-更新時は、毎回まず **Graph API Explorer で短期トークンを取り直す**ところから始めます。  
+更新時は、毎回まず **Instagram の短期トークンを取り直す**ところから始めます。  
 以前やった方法はこれです。
 
 手順:
 
 1. `developers.facebook.com` にログイン
 2. 対象アプリを開く
-3. `Tools` から `Graph API Explorer` を開く
-4. 画面上部で、この自動投稿に使っている **対象アプリ** を選ぶ
-5. `Get Token` または `Generate Access Token` を押す
-6. Facebook ログイン画面が出たら、**Instagram と紐づいている Facebook アカウント**で認証する
+3. `Instagram` 関連の設定画面、または Instagram Login のトークン取得画面を開く
+4. この自動投稿に使っている **対象アプリ** を選ぶ
+5. Instagram 用の `Generate Access Token` を実行する
+6. Instagram アカウントで認証する
 7. 必要な権限を許可する
 
 最低限確認したい権限:
@@ -175,7 +175,7 @@ Meta の Access Token Debugger で、現在のトークンの `有効期限` を
 
 ### 2. 短期トークンを長期トークンへ交換する
 
-Meta App の `App ID` と `App Secret` を使って、短期トークンを長期トークンへ交換します。
+短期トークンを使って、Instagram Graph API の長期トークンへ交換します。
 
 確認場所:
 
@@ -190,10 +190,10 @@ Meta App の `App ID` と `App Secret` を使って、短期トークンを長�
 - `App Secret`
 
 そのうえで、次の URL をブラウザで開きます。  
-`APP_ID`、`APP_SECRET`、`SHORT_LIVED_TOKEN` は自分の値に置き換えてください。
+`APP_SECRET` と `SHORT_LIVED_TOKEN` は自分の値に置き換えてください。
 
 ```text
-https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=APP_ID&client_secret=APP_SECRET&fb_exchange_token=SHORT_LIVED_TOKEN
+https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=APP_SECRET&access_token=SHORT_LIVED_TOKEN
 ```
 
 成功すると、次のような JSON が返ります。
@@ -209,9 +209,18 @@ https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&clien
 `expires_in` が数百万秒なら、長期トークンの可能性が高いです。  
 返ってきた `access_token` を、もう一度 Access Token Debugger へ入れて `有効期限` を確認してください。
 
+更新時は、長期トークンをリフレッシュすることもできます。  
+長期トークンを使って、次の URL を開きます。
+
+```text
+https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=LONG_LIVED_TOKEN
+```
+
+これで有効期限を延長できます。
+
 ### 3. GitHub Secrets を更新する
 
-長期トークンが取れたら、GitHub の Repository secrets にある `FACEBOOK_ACCESS_TOKEN` を更新します。
+長期トークンが取れたら、GitHub の Repository secrets にある `INSTAGRAM_ACCESS_TOKEN` を更新します。
 
 手順:
 
@@ -220,12 +229,12 @@ https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&clien
 3. `Secrets and variables`
 4. `Actions`
 5. `Repository secrets`
-6. `FACEBOOK_ACCESS_TOKEN` を更新
+6. `INSTAGRAM_ACCESS_TOKEN` を更新
 
 注意:
 
 - 値だけを入れる
-- `FACEBOOK_ACCESS_TOKEN=` は入れない
+- `INSTAGRAM_ACCESS_TOKEN=` は入れない
 - `"` は入れない
 - 前後の空白を入れない
 
@@ -236,12 +245,12 @@ https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&clien
 3. `Run workflow`
 4. `debug_token_fingerprint=true`
 
-ログの `FACEBOOK_ACCESS_TOKEN SHA256 prefix: ...` を確認し、手元のトークン指紋と一致することを確認します。
+ログの `INSTAGRAM_ACCESS_TOKEN SHA256 prefix: ...` を確認し、手元のトークン指紋と一致することを確認します。
 
 PowerShell での確認例:
 
 ```powershell
-$token = Read-Host "FACEBOOK_ACCESS_TOKEN"
+$token = Read-Host "INSTAGRAM_ACCESS_TOKEN"
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($token)
 $hash = $sha.ComputeHash($bytes)
@@ -263,8 +272,8 @@ workflow は `.github/workflows/post-to-instagram.yml` に用意しています�
 登録する Secrets:
 
 - `INSTAGRAM_BUSINESS_ID`
-- `FACEBOOK_ACCESS_TOKEN`  
-  Facebook Login 経由で取得した Graph API 用トークンです。
+- `INSTAGRAM_ACCESS_TOKEN`  
+  Instagram Login / Instagram Graph API 用トークンです。
 - `INSTAGRAM_GRAPH_API_VERSION`  
   未設定でもコード側は `v22.0` を使いますが、Secrets に入れておくと管理しやすいです。
 - `GEMINI_API_KEY`
@@ -323,7 +332,7 @@ workflow は `.github/workflows/post-to-instagram.yml` に用意しています�
 2. Gemini またはローカル fallback でコピー生成
 3. Playwright で画像を生成
 4. Cloudinary へ画像をアップロード
-5. Facebook Graph API 経由でカルーセル子コンテナを作成
+5. Instagram Graph API 経由でカルーセル子コンテナを作成
 6. カルーセル親コンテナを作成
 7. 投稿を publish
 
@@ -333,7 +342,7 @@ workflow は `.github/workflows/post-to-instagram.yml` に用意しています�
 - 実行時に非推奨警告が出るため、将来的には `google.genai` への移行を検討してください。
 - `output/` と `state/` は生成物置き場のため、Git 管理対象外です。
 - `INSTAGRAM_PUBLISH_ENABLED=true` のまま本番トークンを使うと、実行時に実際に投稿されます。
-- Meta 側の設定は [developers.facebook.com](https://developers.facebook.com/) で行い、Facebook 経由の Instagram Graph API を使います。
+- Meta 側の設定は [developers.facebook.com](https://developers.facebook.com/) で行い、Instagram Graph API を使います。
 
 ## Git 管理の方針
 
